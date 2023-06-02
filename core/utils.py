@@ -9,6 +9,7 @@
 import csv
 import os
 from shutil import copyfile
+import subprocess as sp
 
 # defaults
 DEFAULT_LABEL_FILE = '../data/class_labels_indices.csv'
@@ -48,10 +49,24 @@ def download(class_name, args):
 
         for row in reader:
             # print command for debugging
-            print("ffmpeg -ss " + str(row[1]) + " -t 10 -i $(youtube-dl -f 'bestaudio' -g https://www.youtube.com/watch?v=" +
-                       str(row[0]) + ") -ar " + str(DEFAULT_FS) + " -- \"" + dst_dir + "/" + str(row[0]) + "_" + row[1] + ".wav\"")
-            os.system(("ffmpeg -ss " + str(row[1]) + " -t 10 -i $(youtube-dl -f 'bestaudio' -g https://www.youtube.com/watch?v=" +
-                       str(row[0]) + ") -ar " + str(DEFAULT_FS) + " -- \"" + dst_dir + "/" + str(row[0]) + "_" + row[1] + ".wav\""))
+            # print("ffmpeg -ss " + str(row[1]) + " -t 10 -i $(youtube-dl -f 'bestaudio' -g https://www.youtube.com/watch?v=" +
+            #            str(row[0]) + ") -ar " + str(DEFAULT_FS) + " -- \"" + dst_dir + "/" + str(row[0]) + "_" + row[1] + ".wav\"")
+            # os.system(("ffmpeg -ss " + str(row[1]) + " -t 10 -i $(youtube-dl -f 'bestaudio' -g https://www.youtube.com/watch?v=" +
+            #            str(row[0]) + ") -ar " + str(DEFAULT_FS) + " -- \"" + dst_dir + "/" + str(row[0]) + "_" + row[1] + ".wav\""))
+            
+
+            # run youtube-dl and capture its output as a string
+            results = sp.run(['youtube-dl','-f','bestaudio','-g',
+                            "https://www.youtube.com/watch?v=" + str(row[0])],
+                            stdout=sp.PIPE,universal_newlines=True)
+            url = results.stdout
+            url=url[:-1]
+            # print("Youtube url: "+repr(url))
+            # run ffmpeg
+            print()
+            print("ffmpeg -ss "+str(row[1])+" -t 10 -i url -ar "+str(DEFAULT_FS) + " " + dst_dir + "/" + str(row[0]) + "_" + row[1] + ".wav")
+            print()
+            sp.run(['ffmpeg','-ss',str(row[1]),'-t','10','-i', url,'-ar', str(DEFAULT_FS),dst_dir + "/" + str(row[0]) + "_" + row[1] + ".wav"])
 
 
 def create_csv(class_name, args):
